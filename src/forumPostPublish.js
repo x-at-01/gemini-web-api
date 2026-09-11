@@ -1,18 +1,17 @@
 import {
+  BROWSER_HEADERS,
   CODE_ERR_AUTH_FAIL,
   CODE_ERR_CSRF_FAIL,
   CODE_ERR_POST_FAIL,
   CODE_OK,
   FORUM_BASE,
-  USER_AGENT,
 } from "./constant.js";
 
 export const sessionVerify = async (cookie_str) => {
   const res = await fetch(FORUM_BASE + "/session/current.json", {
     headers: {
+      ...BROWSER_HEADERS,
       Cookie: cookie_str,
-      Accept: "application/json",
-      "User-Agent": USER_AGENT,
     },
   });
 
@@ -33,9 +32,8 @@ export const sessionVerify = async (cookie_str) => {
 export const csrfTokenFetch = async (cookie_str) => {
   const res = await fetch(FORUM_BASE + "/session/csrf", {
     headers: {
+      ...BROWSER_HEADERS,
       Cookie: cookie_str,
-      Accept: "application/json",
-      "User-Agent": USER_AGENT,
     },
   });
 
@@ -60,24 +58,30 @@ export const topicCreate = async (
   title,
   raw,
 ) => {
-  const res = await fetch(FORUM_BASE + "/posts.json", {
-    method: "POST",
-    headers: {
-      Cookie: cookie_str,
-      "X-CSRF-Token": csrf_token,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "X-Requested-With": "XMLHttpRequest",
-      "User-Agent": USER_AGENT,
-      Origin: FORUM_BASE,
-      Referer: FORUM_BASE + "/c/" + category_id,
-    },
-    body: JSON.stringify({
-      category: category_id,
-      title,
-      raw,
-    }),
-  });
+  const typing_duration_msecs = 65000 + Math.floor(Math.random() * 25000),
+    composer_open_duration_msecs =
+      typing_duration_msecs + 20000 + Math.floor(Math.random() * 15000),
+    res = await fetch(FORUM_BASE + "/posts.json", {
+      method: "POST",
+      headers: {
+        ...BROWSER_HEADERS,
+        Cookie: cookie_str,
+        "X-CSRF-Token": csrf_token,
+        "Content-Type": "application/json",
+        Origin: FORUM_BASE,
+        Referer: FORUM_BASE + "/c/" + category_id,
+      },
+      body: JSON.stringify({
+        category: category_id,
+        title,
+        raw,
+        archetype: "regular",
+        nested_post: true,
+        typing_duration_msecs,
+        composer_open_duration_msecs,
+        draft_key: "new_topic",
+      }),
+    });
 
   const data = await res.json();
 
@@ -90,8 +94,9 @@ export const topicCreate = async (
     return [CODE_OK, FORUM_BASE + "/my/activity", "enqueued"];
   }
 
-  const topic_url =
-    FORUM_BASE + "/t/" + (data.topic_slug ?? "topic") + "/" + data.topic_id;
+  const slug = data.topic_slug ?? data.slug ?? data.topic?.slug ?? "topic",
+    topic_id = data.topic_id ?? data.topic?.id ?? data.id,
+    topic_url = FORUM_BASE + "/t/" + slug + "/" + topic_id;
 
   return [CODE_OK, topic_url, data];
 };

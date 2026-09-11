@@ -1,5 +1,4 @@
 #!/usr/bin/env -S bun
-import { join } from "node:path";
 import {
   CODE_ERR_AUTH_FAIL,
   CODE_ERR_CATEGORY_FAIL,
@@ -8,8 +7,6 @@ import {
   CODE_ERR_CSRF_FAIL,
   CODE_ERR_POST_FAIL,
   CODE_OK,
-  CRATE_NAME,
-  CRATE_URL,
   FORUM_BASE,
   TARGET_CATEGORY_SLUG,
 } from "./src/constant.js";
@@ -17,7 +14,7 @@ import { keychainPwdRead } from "./src/keychainPwdRead.js";
 import { aesKeyDerive, cookieValDecrypt } from "./src/cookieCrypto.js";
 import { cookieDbPathFind, cookieRead } from "./src/cookieRead.js";
 import { forumCategoryFind } from "./src/forumCategoryFind.js";
-import { postContentBuild } from "./src/postContentBuild.js";
+import { postMdRead } from "./src/postMdRead.js";
 import {
   csrfTokenFetch,
   sessionVerify,
@@ -32,7 +29,7 @@ export {
   csrfTokenFetch,
   forumCategoryFind,
   keychainPwdRead,
-  postContentBuild,
+  postMdRead,
   sessionVerify,
   topicCreate,
 };
@@ -99,15 +96,12 @@ const run = async () => {
   }
   console.log("✓ 目标板块: " + category_name + " (ID: " + category_id + ")");
 
-  console.log("\n=== 正在构建帖子内容 ===");
-  const [title, raw] = postContentBuild(),
-    md_file_path = join(import.meta.dirname, "md", "fastalp.md"),
-    full_markdown = "# " + title + "\n\n" + raw;
-  await Bun.write(md_file_path, full_markdown);
+  console.log("\n=== 正在从本地 md/ 目录读取帖子内容 ===");
+  const arg_file = arg_li.find((a) => a.endsWith(".md")),
+    [title, raw, md_file_path] = await postMdRead(arg_file);
+  console.log("源文件: " + md_file_path);
   console.log("标题: " + title);
-  console.log("推广目标: " + CRATE_NAME + " (" + CRATE_URL + ")");
   console.log("内容字数: " + raw.length + " 字符");
-  console.log("✓ 本地 Markdown 文件已保存至: " + md_file_path);
 
   if (is_dry_run) {
     console.log("\n[Dry-run 预览模式] 未执行实际发帖。以下为帖子正文预览:\n");

@@ -1,19 +1,16 @@
 import {
+  BROWSER_HEADERS,
   CODE_ERR_CATEGORY_FAIL,
   CODE_OK,
   FORUM_BASE,
   TARGET_CATEGORY_SLUG,
-  USER_AGENT,
 } from "./constant.js";
 
 export const forumCategoryFind = async (
   target_slug = TARGET_CATEGORY_SLUG,
 ) => {
   const res = await fetch(FORUM_BASE + "/categories.json", {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": USER_AGENT,
-    },
+    headers: BROWSER_HEADERS,
   });
 
   if (!res.ok) {
