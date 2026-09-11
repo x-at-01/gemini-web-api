@@ -33,4 +33,14 @@ export const FORUM_HOST = "users.rust-lang.org",
     "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
     Accept: "application/json, text/javascript, */*; q=0.01",
     "X-Requested-With": "XMLHttpRequest",
+  },
+  RUSTCC_HOST = "rustcc.cn",
+  RUSTCC_BASE = "https://rustcc.cn",
+  RUSTCC_TARGET_CATEGORY = "大家的项目",
+  RUSTCC_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+    Accept:
+      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
   };
+
