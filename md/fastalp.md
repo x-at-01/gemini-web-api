@@ -1,20 +1,20 @@
-# [Announce] fastalp: High-performance lossless floating-point compression in pure Rust
+# fastalp: lossless floating-point compression in pure Rust
 
-Hi everyone,
+Hey everyone,
 
-I'd like to share [fastalp](https://crates.io/crates/fastalp), an adaptive lossless floating-point compression library implemented in pure Rust.
+Over the past few weeks I have been working on [fastalp](https://crates.io/crates/fastalp), a pure Rust implementation of the ALP (Adaptive Lossless Floating-Point) compression algorithm.
 
-It builds upon and extends the theoretical foundation of the ACM SIGMOD 2024 Best Artifact paper *ALP: Adaptive Lossless Floating-Point Compression* (integrated in DuckDB, FastLanes, and Kùzu). In domains like IoT sensing, telemetry, and quantitative finance, floating-point numbers usually originate from decimal readings with fixed precision. General-purpose byte compressors or integer bitpackers often struggle on IEEE 754 float streams, whereas `fastalp` achieves significantly higher compression ratios and throughput.
+If you deal with time series, telemetry, or columnar datasets, you have probably noticed that raw IEEE 754 floats do not compress very well with general-purpose byte compressors (zstd, lz4) or integer bitpackers.
 
-### Key Highlights
+The original ALP paper from ACM SIGMOD 2024 (by Azim Afroozeh et al., which DuckDB and FastLanes adopted) showed that most real-world sensor and financial data actually originates from decimal scales with fixed decimal places. By adaptively projecting floats into integers and applying Frame-of-Reference (FOR) with bitpacking, you can get significantly higher compression ratios and faster decode speeds than general compressors.
 
-- **Pure Safe Rust & no_std**: Zero third-party runtime dependencies, natively supports embedded targets and `no_std` environments.
-- **Unified Generic APIs**: Seamless zero-cost abstractions for both `f64` and `f32` streams.
-- **Strict Bit-Exact Roundtripping**: Guarantees decoded floats match original IEEE 754 bits bit-for-bit (`a.to_bits() == b.to_bits()`).
-- **Zero-Allocation & Buffer Reuse**: Provides `_into` variants (`compress_into`, `decompress_into`) to write directly into preallocated buffers.
-- **Novel Optimizations**: Incorporates Adaptive Delta-ALP and exact decimal division reconstruction (`use_div`) to further reduce dynamic bit-widths and eliminate spurious exceptions.
+I wanted an ergonomic, pure Rust implementation with:
+- Zero third-party dependencies and native no_std support for embedded systems
+- Unified generic APIs for both f32 and f64 streams
+- In-place buffer reuse (`compress_into` / `decompress_into`) to avoid allocation jitter in streaming pipelines
+- Bit-exact roundtripping (`a.to_bits() == b.to_bits()`), with an isolated exception stream for NaN, Inf, and non-decimal floats
 
-### Quick Example
+Here is a minimal example:
 
 ```rust
 use fastalp::{compress, decompress, Result};
@@ -22,10 +22,7 @@ use fastalp::{compress, decompress, Result};
 fn main() -> Result<()> {
     let sensor_data = vec![20.5, 20.6, 20.8, 21.0, 20.9, 21.2];
 
-    // Compress floating-point slice into byte buffer (generic for f64 / f32)
     let compressed = compress(&sensor_data);
-
-    // Decompress byte buffer back to exact f64 slice
     let decompressed: Vec<f64> = decompress(&compressed)?;
 
     assert_eq!(decompressed, sensor_data);
@@ -33,10 +30,9 @@ fn main() -> Result<()> {
 }
 ```
 
-### Links
+Links:
+- Crates.io: https://crates.io/crates/fastalp
+- GitHub: https://github.com/webc-site/fastalp
+- Docs: https://docs.rs/fastalp
 
-- **Crates.io**: https://crates.io/crates/fastalp
-- **Repository**: https://github.com/webc-site/fastalp
-- **Documentation**: https://docs.rs/fastalp
-
-Feedback, benchmark results, and suggestions are warmly welcomed!
+If you have time to check it out, benchmark it on your datasets, or have any suggestions on the API design, I would love to hear your feedback!

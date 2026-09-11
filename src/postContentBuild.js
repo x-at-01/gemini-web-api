@@ -2,49 +2,43 @@ import { CRATE_NAME, CRATE_URL, DOCS_URL, GITHUB_URL } from "./constant.js";
 
 export const postContentBuild = () => {
   const title =
-      "[Announce] " +
-      CRATE_NAME +
-      ": High-performance lossless floating-point compression in pure Rust",
+      CRATE_NAME + ": lossless floating-point compression in pure Rust",
     raw =
-      "Hi everyone,\n\n" +
-      "I'd like to share [" +
+      "Hey everyone,\n\n" +
+      "Over the past few weeks I have been working on [" +
       CRATE_NAME +
       "](" +
       CRATE_URL +
-      "), an adaptive lossless floating-point compression library implemented in pure Rust.\n\n" +
-      "It builds upon and extends the theoretical foundation of the ACM SIGMOD 2024 Best Artifact paper *ALP: Adaptive Lossless Floating-Point Compression* (integrated in DuckDB, FastLanes, and Kùzu). In domains like IoT sensing, telemetry, and quantitative finance, floating-point numbers usually originate from decimal readings with fixed precision. General-purpose byte compressors or integer bitpackers often struggle on IEEE 754 float streams, whereas `" +
-      CRATE_NAME +
-      "` achieves significantly higher compression ratios and throughput.\n\n" +
-      "### Key Highlights\n\n" +
-      "- **Pure Safe Rust & no_std**: Zero third-party runtime dependencies, natively supports embedded targets and `no_std` environments.\n" +
-      "- **Unified Generic APIs**: Seamless zero-cost abstractions for both `f64` and `f32` streams.\n" +
-      "- **Strict Bit-Exact Roundtripping**: Guarantees decoded floats match original IEEE 754 bits bit-for-bit (`a.to_bits() == b.to_bits()`).\n" +
-      "- **Zero-Allocation & Buffer Reuse**: Provides `_into` variants (`compress_into`, `decompress_into`) to write directly into preallocated buffers.\n" +
-      "- **Novel Optimizations**: Incorporates Adaptive Delta-ALP and exact decimal division reconstruction (`use_div`) to further reduce dynamic bit-widths and eliminate spurious exceptions.\n\n" +
-      "### Quick Example\n\n" +
+      "), a pure Rust implementation of the ALP (Adaptive Lossless Floating-Point) compression algorithm.\n\n" +
+      "If you deal with time series, telemetry, or columnar datasets, you have probably noticed that raw IEEE 754 floats do not compress very well with general-purpose byte compressors (zstd, lz4) or integer bitpackers.\n\n" +
+      "The original ALP paper from ACM SIGMOD 2024 (by Azim Afroozeh et al., which DuckDB and FastLanes adopted) showed that most real-world sensor and financial data actually originates from decimal scales with fixed decimal places. By adaptively projecting floats into integers and applying Frame-of-Reference (FOR) with bitpacking, you can get significantly higher compression ratios and faster decode speeds than general compressors.\n\n" +
+      "I wanted an ergonomic, pure Rust implementation with:\n" +
+      "- Zero third-party dependencies and native no_std support for embedded systems\n" +
+      "- Unified generic APIs for both f32 and f64 streams\n" +
+      "- In-place buffer reuse (`compress_into` / `decompress_into`) to avoid allocation jitter in streaming pipelines\n" +
+      "- Bit-exact roundtripping (`a.to_bits() == b.to_bits()`), with an isolated exception stream for NaN, Inf, and non-decimal floats\n\n" +
+      "Here is a minimal example:\n\n" +
       "```rust\n" +
       "use fastalp::{compress, decompress, Result};\n\n" +
       "fn main() -> Result<()> {\n" +
       "    let sensor_data = vec![20.5, 20.6, 20.8, 21.0, 20.9, 21.2];\n\n" +
-      "    // Compress floating-point slice into byte buffer (generic for f64 / f32)\n" +
-      "    let compressed = compress(&sensor_data);\n\n" +
-      "    // Decompress byte buffer back to exact f64 slice\n" +
+      "    let compressed = compress(&sensor_data);\n" +
       "    let decompressed: Vec<f64> = decompress(&compressed)?;\n\n" +
       "    assert_eq!(decompressed, sensor_data);\n" +
       "    Ok(())\n" +
       "}\n" +
       "```\n\n" +
-      "### Links\n\n" +
-      "- **Crates.io**: " +
+      "Links:\n" +
+      "- Crates.io: " +
       CRATE_URL +
       "\n" +
-      "- **Repository**: " +
+      "- GitHub: " +
       GITHUB_URL +
       "\n" +
-      "- **Documentation**: " +
+      "- Docs: " +
       DOCS_URL +
       "\n\n" +
-      "Feedback, benchmark results, and suggestions are warmly welcomed!";
+      "If you have time to check it out, benchmark it on your datasets, or have any suggestions on the API design, I would love to hear your feedback!";
 
   return [title, raw];
 };
