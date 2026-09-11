@@ -25,17 +25,15 @@ export const rustccCategoryList = async (cookie_str) => {
     return [CODE_ERR_CATEGORY_FAIL, []];
   }
 
-  const category_li = [];
-  for (const m of select_match[1].matchAll(
-    /<option value\s*=\s*"([^"]+)"[^>]*>([^<]+)<\/option>/g,
-  )) {
-    const id = m[1].trim(),
-      name = m[2]
-        .replaceAll("&#x2F;", "/")
-        .replaceAll("&amp;", "&")
-        .trim();
-    category_li.push({ id, name });
-  }
+  const category_li = Array.from(
+    select_match[1].matchAll(
+      /<option value\s*=\s*"([^"]+)"[^>]*>([^<]+)<\/option>/g,
+    ),
+    (m) => ({
+      id: m[1].trim(),
+      name: m[2].replaceAll("&#x2F;", "/").replaceAll("&amp;", "&").trim(),
+    }),
+  );
 
   return [CODE_OK, category_li];
 };

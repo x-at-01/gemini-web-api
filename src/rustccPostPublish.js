@@ -36,14 +36,15 @@ export const rustccArticleCreate = async (
   tags = "",
   extlink = "",
 ) => {
-  const form = new URLSearchParams();
-  form.append("section_id", section_id);
-  form.append("stype", "0");
-  form.append("from", "form");
-  form.append("title", title);
-  form.append("tags", tags);
-  form.append("raw_content", raw_content);
-  form.append("extlink", extlink);
+  const form = new URLSearchParams({
+    section_id,
+    stype: "0",
+    from: "form",
+    title,
+    tags,
+    raw_content,
+    extlink,
+  });
 
   const res = await fetch(RUSTCC_BASE + "/s/article/create", {
     method: "POST",
@@ -79,13 +80,14 @@ export const rustccArticleEdit = async (
   tags = "",
   extlink = "",
 ) => {
-  const form = new URLSearchParams();
-  form.append("id", article_id);
-  form.append("section_id", section_id);
-  form.append("title", title);
-  form.append("tags", tags);
-  form.append("raw_content", raw_content);
-  form.append("extlink", extlink);
+  const form = new URLSearchParams({
+    id: article_id,
+    section_id,
+    title,
+    tags,
+    raw_content,
+    extlink,
+  });
 
   const res = await fetch(RUSTCC_BASE + "/s/article/edit", {
     method: "POST",
