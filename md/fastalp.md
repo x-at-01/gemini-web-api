@@ -1,27 +1,10 @@
 # fastalp: Evolving ALP float compression in pure Rust — 2.6x faster, 60% higher ratio (25 GB/s decode)
 
-[fastalp](https://crates.io/crates/fastalp) is an engineered redesign and algorithmic evolution of the ALP (Adaptive Lossless Floating-Point) compression paradigm, implemented in pure Rust.
-
-While the original ALP paper (ACM SIGMOD 2024 by Azim Afroozeh et al., adopted in DuckDB and FastLanes) demonstrated the effectiveness of projecting decimal floats into integers with Frame-of-Reference (FOR) and bitpacking, the reference C++ implementation exhibits several architectural bottlenecks:
-1. **Exhaustive unpruned sampling**: Searching the full parameter space accounts for >80% of execution time, capping end-to-end compression throughput at ~0.8 GB/s.
-2. **Two-pass delta decompression**: Unpacking integer deltas into an 8KB stack buffer followed by a separate prefix-sum pass creates intermediate memory roundtrips and cache stalls.
-3. **Multiplication truncation exceptions**: Binary floating-point multiplication (e.g. `* 0.1`) introduces IEEE 754 truncation errors, creating spurious exceptions that inflate stored byte volume by 20% ~ 38%.
-4. **Magic-number rounding bias limitations**: Legacy floating-point rounding biases (`0x0018000000000000`) are bounded to the $[-2^{51}, 2^{51}]$ range and risk overflow on large exponents.
-
-`fastalp` addresses these issues with several algorithmic and microarchitectural breakthroughs:
-
-- **Three-Tier Microarchitectural Pruning**: Replaces unpruned parameter searches with a cascade filter (pure decimal fast path, 4/16-sample short-circuiting, and non-decimal abort), boosting end-to-end compression throughput from 0.8 GB/s to **2.1 GB/s (2.58x faster than C++ ALP)**, with pure kernel throughput reaching **7.8 GB/s (1.46x vs C++)**.
-- **Fused Single-Pass `AlpConsumer` Pipeline**: Bit-unpacking, prefix-sum accumulation, base-offset addition, and IEEE 754 float conversion are merged directly in CPU registers without any intermediate 8KB stack buffers, elevating decompression throughput to **25.3 GB/s GeoMean** (1.31x vs C++ ALP).
-- **Exact Decimal Division Reconstruction (`use_div`)**: Eliminates spurious exception inflation caused by IEEE 754 binary multiplication truncation, shrinking compressed size by 20% ~ 38%.
-- **Adaptive Delta-ALP**: Implements first-order difference encoding with a 16-sample mathematical short-circuit filter, narrowing dynamic bit-widths by 15% ~ 38% on continuous physical waveforms.
-- **0-Bit Sparse Outlier Pruning**: Automatically isolates pulse spikes into the exception stream, dropping the primary bitstream to 0-bit and achieving 150x ~ 744x compression ratios on quasi-constant telemetry.
-- **Hardware-Native Round-Ties-Even**: Upgrades legacy magic-number float biases to native CPU rounding instructions (`ROUNDSD` on x86, `FRINTN` on ARM64), eliminating $[-2^{51}, 2^{51}]$ overflow bounds while maintaining branchless latency.
-- **Zero-Allocation Streaming**: Direct in-place buffer reuse via `compress_into` and `decompress_into` to eliminate allocation jitter in streaming pipelines.
-- **Zero-Cost Generic Abstraction**: Full support for both `f32` and `f64` streams under `AlpFloat`, with zero third-party dependencies and native `no_std` support for embedded targets.
+[fastalp](https://crates.io/crates/fastalp) is a pure-Rust algorithmic evolution of the ALP (Adaptive Lossless Floating-Point) compression paradigm, engineered for high-throughput time-series, telemetry, and columnar storage engines.
 
 ### Benchmark Comparison
 
-Evaluated on identical hardware (Apple M2 Max) across all 37 public and industrial datasets from the original ALP paper suite (Geometric Mean):
+Evaluated across all 37 public and industrial datasets from the official ALP benchmark suite on an Apple M2 Max (Geometric Mean across all datasets):
 
 | Codec | Category | Decomp Throughput | End-to-End Comp | Pure Kernel | GeoMean Ratio |
 | :--- | :--- | :---: | :---: | :---: | :---: |
@@ -34,6 +17,38 @@ Evaluated on identical hardware (Apple M2 Max) across all 37 public and industri
 | Gorilla | Specialized Float | 1.2 GB/s | 1.9 GB/s | — | 4.41x |
 
 ![fastalp Floating-Point Compression Performance & Ratio Benchmark|690x2512](https://fastly.jsdelivr.net/gh/webc-fs/-@sJ/iDXAaJVvppSgiJndAw_g.svg)
+
+### Performance Advantages
+
+Across the 37-dataset benchmark suite, `fastalp` demonstrates consistent speed and density gains over both the C++ reference and standard general-purpose codecs:
+
+- **2.58x faster end-to-end compression** (2.1 GB/s vs 0.8 GB/s): Unpruned sampling in C++ ALP consumes >80% of CPU cycles. `fastalp`'s cascade search prunes non-decimal and low-gain models early, maintaining multi-gigabyte ingestion rates.
+- **1.31x faster decompression** (25.3 GB/s vs 19.3 GB/s GeoMean): Pure register decoding eliminates intermediate memory roundtrips, scaling up to 40~65 GB/s on civic/macro data and 90+ GB/s on steady waveforms.
+- **60% higher compression ratio** (9.50x vs 5.93x GeoMean): By reconstructing division operations and delta-encoding step variations, `fastalp` narrows dynamic bit-widths and prevents spurious exception inflation.
+- **150x ~ 744x on quasi-constant telemetry**: Outlier isolation drops the primary bitstream to 0-bit, compressing 1024-element constant blocks into 11 bytes.
+- **Order-of-magnitude gains over byte compressors**: Outperforms Zstd level 3 by 18x in decompression speed and 4x in compression speed, while achieving 56% higher compression density on decimal floats.
+
+### Algorithmic & Microarchitectural Evolution
+
+The original ALP paper (ACM SIGMOD 2024 by Azim Afroozeh et al.) established the principle of projecting decimal floats into integers followed by Frame-of-Reference (FOR) bitpacking. `fastalp` re-engineers this paradigm to resolve fundamental microarchitectural bottlenecks in the reference implementation:
+
+- **Three-Tier Microarchitectural Pruning Pipeline**  
+  Replaces exhaustive parameter exploration with a 3-stage cascade: an immediate single-cycle check for identical sequences, 4/16-sample short-circuiting for irregular data, and early non-decimal aborts. This slashes sampling overhead by 70% ~ 90%.
+
+- **Fused Single-Pass `AlpConsumer` Register Pipeline**  
+  Traditional delta decompression is two-pass: unpacking integer deltas into an 8KB stack buffer, followed by a separate prefix-sum and floating-point conversion pass. Fastalp introduces the monomorphized `AlpConsumer` architecture: bit-unpacking, prefix-sum accumulation, base-offset arithmetic, and IEEE 754 float reconstruction occur in a single pass entirely within CPU registers, eliminating 8KB intermediate buffer allocation, cache writes, and re-reads.
+
+- **Exact Decimal Division Reconstruction (`use_div`)**  
+  Binary float multiplication (e.g. `* 0.1`) suffers from IEEE 754 truncation error, causing valid decimal readings to fail roundtrip checks and land in the exception dictionary. `fastalp` reconstructs exact division paths, eliminating spurious exceptions and shrinking stored volume by 20% ~ 38%.
+
+- **Adaptive Delta-ALP with Short-Circuit Filter**  
+  Physical waveforms often have large absolute amplitudes but tiny step differentials. `fastalp` combines first-order differences with a 16-sample mathematical filter that halts delta evaluation when the local gradient exceeds the FOR span, saving CPU cycles on irregular data while cutting bit-widths by 15% ~ 38% on smooth waves.
+
+- **Hardware-Native Round-Ties-Even**  
+  Original ALP relied on floating-point magic constants (`0x0018000000000000`), which silently overflow outside $[-2^{51}, 2^{51}]$. `fastalp` maps rounding directly to hardware instructions (`ROUNDSD` on x86, `FRINTN` on ARM64), removing dynamic range limits while preserving branchless throughput.
+
+- **Zero-Allocation Streaming & `no_std`**  
+  Zero third-party dependencies, zero runtime heap allocations via `compress_into` / `decompress_into`, and native `no_std` support for embedded targets. Unified zero-cost abstractions support both `f32` and `f64`.
 
 ### Usage
 
