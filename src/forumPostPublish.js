@@ -87,11 +87,7 @@ export const topicCreate = async (
   }
 
   if (data?.action === "enqueued") {
-    return [
-      CODE_OK,
-      FORUM_BASE + "/u/x-at-01/activity",
-      "enqueued",
-    ];
+    return [CODE_OK, FORUM_BASE + "/my/activity", "enqueued"];
   }
 
   const topic_url =
