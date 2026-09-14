@@ -1,0 +1,158 @@
+project: fixrs
+github: https://github.com/webc-site/fixrs
+crates_io: https://crates.io/crates/fixrs
+year: 2026
+date: 2026-09-14
+
+posts:
+  - platform: news.ycombinator.com
+    title: "Show HN: fixrs – Refactoring for long absolute paths and clippy::absolute_paths"
+    source_file: md/fixrs.md
+    url: https://news.ycombinator.com/item?id=49696750
+    published_at: 2026-09-14T13:42:17.473Z
+  - platform: rustcc.cn
+    section: 大家的项目
+    title: 写了个小工具 fixrs，自动修复 Rust 冗长绝对路径和 clippy::absolute_paths
+    source_file: md/fixrs_zh.md
+    url: https://rustcc.cn/article?id=0161a65c-e453-469e-bede-5db29f01c592
+    published_at: 2026-09-14T17:51:14+08:00
+
+  - platform: users.rust-lang.org
+    section: announcements
+    title: "fixrs: Automatic refactoring for long absolute paths and clippy::absolute_paths"
+    source_file: md/fixrs.md
+    url: https://users.rust-lang.org/t/fixrs-automatic-refactoring-for-long-absolute-paths-and-clippy-absolute-paths/142420
+    published_at: 2026-09-14T17:51:18+08:00
+
+issue_replies:
+  - repository: getfloresta/Floresta
+    issue_number: 1073
+    issue_title: Prune full path import on call sites
+    issue_url: https://github.com/getfloresta/Floresta/issues/1073
+    comment_url: https://github.com/getfloresta/Floresta/issues/1073#issuecomment-5662187697
+    replied_at: 2026-09-14T17:55:44+08:00
+    comment_body: |
+      If you're looking to automate this across the codebase, [fixrs](https://github.com/webc-site/fixrs) was built for this exact purpose (refactoring long paths into `use` imports to satisfy `clippy::absolute_paths`).
+
+      ### Installation
+      ```bash
+      cargo install fixrs
+      ```
+
+      ### Usage
+      Run inside your crate or workspace root:
+      ```bash
+      # Preview changes
+      cargo fixrs --dry-run
+
+      # Apply in-place
+      cargo fixrs
+      ```
+
+      ### What it does
+      - Automatically brings qualified paths into scope with `use` statements and updates call sites (e.g. `std::fs::open()` -> `use std::fs; ... fs::open()`).
+      - Tracks lexical scopes per module to avoid shadowing or collision with existing local identifiers.
+      - Automatically formats modified files with `rustfmt`.
+
+reddit_replies:
+  - platform: reddit.com
+    subreddit: rust
+    post_id: 1veqxhc
+    post_title: "If you're as pedantic as me, add this Clippy config to your Cargo.toml"
+    post_url: https://www.reddit.com/r/rust/comments/1veqxhc/if_youre_as_pedantic_as_me_add_this_clippy_config/
+    comment_id: p9tztgf
+    comment_url: https://www.reddit.com/r/rust/comments/1veqxhc/if_youre_as_pedantic_as_me_add_this_clippy_config/p9tztgf/
+    replied_at: 2026-09-14T21:10:54.952Z
+    comment_body: |
+      I'm pretty new to Rust, but as someone who also likes strict lints, clippy::absolute_paths was a pain to deal with.
+
+      The tricky part is that cargo clippy --fix cannot provide machine-applicable suggestions for clippy::absolute_paths. Bringing paths into scope with use statements isn't always safe automatically, because direct imports can shadow local variables or trigger name collisions in nested modules. Doing dozens of these by hand across files gets old real fast.
+
+      I ended up writing a small CLI tool called fixrs to automate this workflow. It parses the AST with syn 2, tracks lexical scopes per module, and refactors long paths into use imports (falling back to importing the parent module if a direct import would clash).
+
+      You can install it directly via cargo:
+
+      ```bash
+      cargo install fixrs
+      ```
+
+      To preview changes without touching any files:
+
+      ```bash
+      cargo fixrs --dry-run
+      ```
+
+      And to apply them in-place:
+
+      ```bash
+      cargo fixrs
+      ```
+
+      Here is a quick before and after of how it cleans up call sites and resolves module scopes:
+
+      ```rust
+      // Before:
+      pub mod time_stamp {
+          pub const TICKS_PER_SECOND: u64 = wbase::convert::TICKS_PER_SECOND as u64;
+      }
+
+      // After:
+      pub mod time_stamp {
+          use wbase::convert;
+
+          pub const TICKS_PER_SECOND: u64 = convert::TICKS_PER_SECOND as u64;
+      }
+      ```
+
+      Hope this helps save some manual refactoring time if anyone else is running into similar clippy warnings.
+
+  - platform: reddit.com
+    subreddit: rust
+    post_id: 1m0r3s7
+    post_title: "Do you use clippy::restriction lints?"
+    post_url: https://www.reddit.com/r/rust/comments/1m0r3s7/do_you_use_clippyrestriction_lints/
+    comment_id: p9tz2xd
+    comment_url: https://www.reddit.com/r/rust/comments/1m0r3s7/do_you_use_clippyrestriction_lints/p9tz2xd/
+    replied_at: 2026-09-14T21:07:46.573Z
+    comment_body: |
+      I'm still fairly new to Rust, but clippy::absolute_paths from the restriction group was one of the first ones that gave me headaches.
+
+      The tricky part is that cargo clippy --fix cannot provide machine-applicable suggestions for clippy::absolute_paths. Bringing paths into scope with use statements isn't always safe automatically, because direct imports can shadow local variables or trigger name collisions in nested modules. Doing dozens of these by hand across files gets old real fast.
+
+      I ended up writing a small CLI tool called fixrs to automate this workflow. It parses the AST with syn 2, tracks lexical scopes per module, and refactors long paths into use imports (falling back to importing the parent module if a direct import would clash).
+
+      You can install it directly via cargo:
+
+      ```bash
+      cargo install fixrs
+      ```
+
+      To preview changes without touching any files:
+
+      ```bash
+      cargo fixrs --dry-run
+      ```
+
+      And to apply them in-place:
+
+      ```bash
+      cargo fixrs
+      ```
+
+      Here is a quick before and after of how it cleans up call sites and resolves module scopes:
+
+      ```rust
+      // Before:
+      pub mod time_stamp {
+          pub const TICKS_PER_SECOND: u64 = wbase::convert::TICKS_PER_SECOND as u64;
+      }
+
+      // After:
+      pub mod time_stamp {
+          use wbase::convert;
+
+          pub const TICKS_PER_SECOND: u64 = convert::TICKS_PER_SECOND as u64;
+      }
+      ```
+
+      Hope this helps save some manual refactoring time if anyone else is running into similar clippy warnings.

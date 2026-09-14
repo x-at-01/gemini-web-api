@@ -1,0 +1,50 @@
+project: fixrs
+github: https://github.com/webc-site/fixrs
+crates_io: https://crates.io/crates/fixrs
+year: 2026
+date: 2026-09-14
+
+posts:
+  - platform: rustcc.cn
+    section: 大家的项目
+    title: 写了个小工具 fixrs，自动修复 Rust 冗长绝对路径和 clippy::absolute_paths
+    source_file: md/fixrs_zh.md
+    url: https://rustcc.cn/article?id=0161a65c-e453-469e-bede-5db29f01c592
+    published_at: 2026-09-14T17:51:14+08:00
+
+  - platform: users.rust-lang.org
+    section: announcements
+    title: "fixrs: Automatic refactoring for long absolute paths and clippy::absolute_paths"
+    source_file: md/fixrs.md
+    url: https://users.rust-lang.org/t/fixrs-automatic-refactoring-for-long-absolute-paths-and-clippy-absolute-paths/142420
+    published_at: 2026-09-14T17:51:18+08:00
+
+issue_replies:
+  - repository: getfloresta/Floresta
+    issue_number: 1073
+    issue_title: Prune full path import on call sites
+    issue_url: https://github.com/getfloresta/Floresta/issues/1073
+    comment_url: https://github.com/getfloresta/Floresta/issues/1073#issuecomment-5662187697
+    replied_at: 2026-09-14T17:55:44+08:00
+    comment_body: |
+      If you're looking to automate this across the codebase, [fixrs](https://github.com/webc-site/fixrs) was built for this exact purpose (refactoring long paths into `use` imports to satisfy `clippy::absolute_paths`).
+
+      ### Installation
+      ```bash
+      cargo install fixrs
+      ```
+
+      ### Usage
+      Run inside your crate or workspace root:
+      ```bash
+      # Preview changes
+      cargo fixrs --dry-run
+
+      # Apply in-place
+      cargo fixrs
+      ```
+
+      ### What it does
+      - Automatically brings qualified paths into scope with `use` statements and updates call sites (e.g. `std::fs::open()` -> `use std::fs; ... fs::open()`).
+      - Tracks lexical scopes per module to avoid shadowing or collision with existing local identifiers.
+      - Automatically formats modified files with `rustfmt`.
