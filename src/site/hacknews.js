@@ -139,12 +139,12 @@ export const post = async (
     }
   }
 
-  await postsYmlRecord({
-    platform: "news.ycombinator.com",
-    title: final_title,
-    source_file: md_file_path,
-    url: story_url,
-  });
+  await postsYmlRecord(
+    "news.ycombinator.com",
+    final_title,
+    md_file_path,
+    story_url,
+  );
 
   return [CODE_OK, story_url, "success"];
 };

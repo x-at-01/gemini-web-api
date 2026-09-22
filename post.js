@@ -77,9 +77,9 @@ const run = async () => {
     })
     .help("help")
     .alias("h", "help")
-    .parse();
+    .parse(),
+    positional_li = argv._.map((a) => String(a));
 
-  const positional_li = argv._.map((a) => String(a));
   let target = argv.to,
     file_name = positional_li.find((a) => a.endsWith(".md"));
 

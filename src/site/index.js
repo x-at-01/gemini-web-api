@@ -4,7 +4,7 @@ import rustLang from "./rustLang.js";
 import hacknews from "./hacknews.js";
 import reddit from "./reddit.js";
 import { postMdRead } from "../postMdRead.js";
-import { CODE_OK } from "../constant.js";
+import { CODE_ERR_TARGET_UNKNOWN, CODE_OK } from "../constant.js";
 
 export const site_map = {
   juejin,
@@ -105,7 +105,7 @@ export const sitePost = async (
     console.log(
       "可用平台: juejin, rustcc, rust-lang, hacknews, reddit, all, auto",
     );
-    return [1, "", "未知平台"];
+    return [CODE_ERR_TARGET_UNKNOWN, "", "未知平台"];
   }
 
   return handler(

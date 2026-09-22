@@ -4,7 +4,8 @@ export const CODE_OK = 0,
   CODE_ERR_AUTH_FAIL = 3,
   CODE_ERR_CATEGORY_FAIL = 4,
   CODE_ERR_CSRF_FAIL = 5,
-  CODE_ERR_POST_FAIL = 6;
+  CODE_ERR_POST_FAIL = 6,
+  CODE_ERR_TARGET_UNKNOWN = 7;
 
 export const CHROME_COOKIE_DIR =
     (process.env.HOME ?? "") + "/Library/Application Support/Google/Chrome",

@@ -196,13 +196,13 @@ export const post = async (
     return [CODE_ERR_POST_FAIL, "", article_id];
   }
 
-  await postsYmlRecord({
-    platform: "juejin.cn",
-    section: category_name,
-    title: final_title,
-    source_file: md_file_path,
-    url: article_url,
-  });
+  await postsYmlRecord(
+    "juejin.cn",
+    final_title,
+    md_file_path,
+    article_url,
+    category_name,
+  );
 
   console.log("🎉 发布成功！文章链接: " + article_url);
   return [CODE_OK, article_url, article_id];

@@ -97,13 +97,13 @@ export const post = async (
     return [CODE_ERR_POST_FAIL, "", result];
   }
 
-  await postsYmlRecord({
-    platform: "users.rust-lang.org",
-    section: category_name,
-    title: final_title,
-    source_file: md_file_path,
-    url: topic_url,
-  });
+  await postsYmlRecord(
+    "users.rust-lang.org",
+    final_title,
+    md_file_path,
+    topic_url,
+    category_name,
+  );
 
   if (result === "enqueued") {
     console.log(

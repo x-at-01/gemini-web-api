@@ -117,13 +117,13 @@ export const post = async (
     return [CODE_ERR_POST_FAIL, "", result];
   }
 
-  await postsYmlRecord({
-    platform: "rustcc.cn",
-    section: category_name,
-    title: final_title,
-    source_file: md_file_path,
-    url: topic_url,
-  });
+  await postsYmlRecord(
+    "rustcc.cn",
+    final_title,
+    md_file_path,
+    topic_url,
+    category_name,
+  );
 
   console.log("🎉 发布成功！帖子链接: " + topic_url);
   return [CODE_OK, topic_url, result];

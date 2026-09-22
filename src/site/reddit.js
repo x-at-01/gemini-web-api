@@ -12,10 +12,10 @@ export const post = async (
   extra_opt = {},
 ) => {
   const custom_post = extra_opt.post ?? null,
-    custom_subs = extra_opt.subreddit
+    custom_sub_li = extra_opt.subreddit
       ? extra_opt.subreddit.split(",").map((s) => s.trim())
       : null,
-    custom_queries = extra_opt.query
+    custom_query_li = extra_opt.query
       ? extra_opt.query.split(",").map((q) => q.trim())
       : null,
     max_replies = extra_opt.max ? parseInt(extra_opt.max, 10) || 1 : 1;
@@ -23,8 +23,8 @@ export const post = async (
   return redditPostReply(
     is_dry_run,
     custom_post,
-    custom_subs,
-    custom_queries,
+    custom_sub_li,
+    custom_query_li,
     max_replies,
     fixrsReplyGenerate,
   );
