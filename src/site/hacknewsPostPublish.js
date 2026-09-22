@@ -5,7 +5,7 @@ import {
   CODE_OK,
   HN_BASE,
   HN_HEADERS,
-} from "./constant.js";
+} from "../constant.js";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED ??= "0";
 

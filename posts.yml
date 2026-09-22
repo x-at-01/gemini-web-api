@@ -24,6 +24,13 @@ posts:
     url: https://users.rust-lang.org/t/fixrs-automatic-refactoring-for-long-absolute-paths-and-clippy-absolute-paths/142420
     published_at: 2026-09-14T17:51:18+08:00
 
+  - platform: juejin.cn
+    section: 后端
+    title: 写了个纯 Rust 浮点无损压缩库 fastalp，重构 ALP 算法实现 25 GB/s 解码
+    source_file: md/fastalp_juejin.md
+    url: https://juejin.cn/post/7688159753847046180
+    published_at: 2026-09-22T17:02:03+08:00
+
 issue_replies:
   - repository: getfloresta/Floresta
     issue_number: 1073

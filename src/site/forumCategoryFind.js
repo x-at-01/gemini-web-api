@@ -4,7 +4,7 @@ import {
   CODE_OK,
   FORUM_BASE,
   TARGET_CATEGORY_SLUG,
-} from "./constant.js";
+} from "../constant.js";
 
 export const forumCategoryFind = async (
   target_slug = TARGET_CATEGORY_SLUG,

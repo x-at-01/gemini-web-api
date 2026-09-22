@@ -5,7 +5,7 @@ import {
   CODE_ERR_POST_FAIL,
   CODE_OK,
   FORUM_BASE,
-} from "./constant.js";
+} from "../constant.js";
 
 export const sessionVerify = async (cookie_str) => {
   const res = await fetch(FORUM_BASE + "/session/current.json", {

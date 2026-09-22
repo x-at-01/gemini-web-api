@@ -4,7 +4,7 @@ import {
   RUSTCC_BASE,
   RUSTCC_HEADERS,
   RUSTCC_TARGET_CATEGORY,
-} from "./constant.js";
+} from "../constant.js";
 
 export const rustccCategoryList = async (cookie_str) => {
   const res = await fetch(RUSTCC_BASE + "/p/article/create", {

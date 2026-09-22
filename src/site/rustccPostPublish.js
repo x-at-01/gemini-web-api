@@ -4,7 +4,7 @@ import {
   CODE_OK,
   RUSTCC_BASE,
   USER_AGENT,
-} from "./constant.js";
+} from "../constant.js";
 
 export const rustccSessionVerify = async (cookie_str) => {
   const res = await fetch(RUSTCC_BASE + "/account", {

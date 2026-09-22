@@ -1,17 +1,15 @@
-import { join } from "node:path";
-import { existsSync } from "node:fs";
 import {
   CODE_ERR_AUTH_FAIL,
-  CODE_ERR_COOKIE_DB,
-  CODE_ERR_COOKIE_EMPTY,
   CODE_ERR_CSRF_FAIL,
   CODE_ERR_POST_FAIL,
   CODE_OK,
   HN_BASE,
   HN_HOST,
-} from "./constant.js";
-import { cookieRead } from "./cookieRead.js";
-import { postMdRead } from "./postMdRead.js";
+} from "../constant.js";
+import { siteCookieRead } from "../siteCookieRead.js";
+import { postDryRunPreview } from "../postDryRunPreview.js";
+import { postsYmlRecord } from "../postsYmlRecord.js";
+import { postMdRead } from "../postMdRead.js";
 import {
   hacknewsCommentAdd,
   hacknewsSessionVerify,
@@ -20,74 +18,38 @@ import {
   mdToHnText,
 } from "./hacknewsPostPublish.js";
 
-const postsYmlRecord = async (post_info) => {
-  const yml_path = join(import.meta.dirname, "../posts.yml");
-  if (!existsSync(yml_path)) return;
-
-  const content = await Bun.file(yml_path).text(),
-    entry = [
-      "",
-      `  - platform: news.ycombinator.com`,
-      `    title: "${post_info.title.replaceAll('"', '\\"')}"`,
-      `    source_file: ${post_info.source_file}`,
-      `    url: ${post_info.url}`,
-      `    published_at: ${new Date().toISOString()}`,
-    ].join("\n");
-
-  const new_content = content.includes("posts:")
-    ? content.replace(/(posts:)/, "$1" + entry)
-    : content + "\nposts:" + entry;
-
-  await Bun.write(yml_path, new_content);
-};
-
-export const hacknewsPost = async (
+export const post = async (
   file_name = "md/fixrs.md",
   is_dry_run = false,
+  custom_section = null,
+  custom_tags = null,
+  custom_link = null,
   custom_title = null,
-  custom_url = null,
-  as_text = false,
-  add_comment = true,
+  edit_id = null,
+  extra_opt = {},
 ) => {
-  console.log("=== 正在读取本机 Chrome SQLite Cookies (Hacker News) ===");
-  const [cookie_code, cookie_str, cookie_map] = await cookieRead(HN_HOST);
-
-  if (cookie_code === CODE_ERR_COOKIE_DB) {
-    console.error("[错误] 未找到 Chrome Cookies SQLite 数据库文件。");
-    return [CODE_ERR_COOKIE_DB, "", "未找到 Chrome Cookie 数据库"];
-  }
-
-  if (cookie_code === CODE_ERR_COOKIE_EMPTY) {
-    console.error(
-      "[错误] 未在 Chrome 中找到 " +
-        HN_HOST +
-        " 的有效 Cookie，请在 Chrome 中登录 Hacker News。",
-    );
-    return [CODE_ERR_COOKIE_EMPTY, "", "未找到有效 Cookie"];
-  }
-
-  console.log("✓ 成功解密 Cookie 项数: " + Object.keys(cookie_map).length);
+  const [cookie_code, cookie_str] = await siteCookieRead(
+    HN_HOST,
+    "Hacker News",
+  );
+  if (cookie_code !== CODE_OK) return [cookie_code, "", "读取 Cookie 失败"];
 
   console.log("\n=== 正在验证 Hacker News 登录状态 ===");
   const [auth_code, username] = await hacknewsSessionVerify(cookie_str);
-
   if (auth_code !== CODE_OK || !username) {
     console.error(
-      "[错误] 登录验证失败，Cookie 可能已过期，请在 Chrome 中重新登录 Hacker News。",
+      "[错误] 登录验证失败，请在 Chrome 中重新登录 Hacker News。",
     );
     return [CODE_ERR_AUTH_FAIL, "", "登录验证失败"];
   }
-
   console.log("✓ 当前登录用户: " + username);
 
   console.log("\n=== 正在获取 Hacker News 发帖表单 Token ===");
   const [token_code, fnid, fnop] = await hacknewsSubmitTokenFetch(cookie_str);
-
   if (token_code !== CODE_OK) {
     console.error("[错误] 获取提交表单 Token 失败。");
     return [CODE_ERR_CSRF_FAIL, "", "获取提交 Token 失败"];
   }
-
   console.log("✓ 成功获取发帖 Token (fnid: " + fnid.slice(0, 8) + "...)");
 
   console.log("\n=== 正在读取 Markdown 文件内容 ===");
@@ -109,8 +71,10 @@ export const hacknewsPost = async (
     }
   }
 
-  const hn_formatted_text = mdToHnText(raw),
-    target_url = as_text ? "" : (custom_url ?? extlink),
+  const as_text = extra_opt.asText ?? false,
+    add_comment = extra_opt.comment ?? true,
+    hn_formatted_text = mdToHnText(raw),
+    target_url = as_text ? "" : (custom_link ?? extlink),
     target_text = as_text ? hn_formatted_text : "";
 
   console.log("最终标题: " + final_title + " (" + final_title.length + "/80 字符)");
@@ -135,24 +99,11 @@ export const hacknewsPost = async (
   }
 
   if (is_dry_run) {
-    console.log("\n[Dry-run 预览模式] 未执行实际发帖。预览信息如下:\n");
-    console.log("----------------------------------------");
-    console.log("平台: " + HN_BASE);
-    console.log("用户: " + username);
-    console.log("标题: " + final_title);
-    if (target_url) {
-      console.log("URL : " + target_url);
-      if (add_comment) {
-        console.log("\n--- 将在发帖成功后追加的首评内容 ---");
-        console.log(hn_formatted_text);
-      }
-    } else {
-      console.log("\n--- 正文内容 ---");
-      console.log(target_text);
-    }
-    console.log("----------------------------------------");
-    console.log("\n如需执行真实发布，请去掉 --dry-run 参数直接运行。");
-    return [CODE_OK, "", "dry-run"];
+    return postDryRunPreview("news.ycombinator.com", final_title, target_text || hn_formatted_text, {
+      用户: username,
+      链接: target_url || "(纯文本讨论)",
+      首评: add_comment ? "自动追加首评" : "不追加",
+    });
   }
 
   console.log("\n=== 正在提交帖子至 Hacker News ===");
@@ -189,12 +140,13 @@ export const hacknewsPost = async (
   }
 
   await postsYmlRecord({
+    platform: "news.ycombinator.com",
     title: final_title,
-    source_file: md_file_path.replace(process.cwd() + "/", ""),
+    source_file: md_file_path,
     url: story_url,
   });
 
   return [CODE_OK, story_url, "success"];
 };
 
-export default hacknewsPost;
+export default post;

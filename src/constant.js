@@ -50,6 +50,18 @@ export const FORUM_HOST = "users.rust-lang.org",
     "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
     Accept:
       "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  },
+  JUEJIN_HOST = "juejin.cn",
+  JUEJIN_API_BASE = "https://api.juejin.cn",
+  JUEJIN_BASE = "https://juejin.cn",
+  JUEJIN_TARGET_CATEGORY = "后端",
+  JUEJIN_CLIENT_TYPE = 2608,
+  JUEJIN_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+    Accept: "application/json, text/plain, */*",
+    "Content-Type": "application/json",
   };
+
 
 

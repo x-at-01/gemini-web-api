@@ -1,46 +1,39 @@
 import {
   CODE_ERR_AUTH_FAIL,
   CODE_ERR_CATEGORY_FAIL,
-  CODE_ERR_COOKIE_DB,
-  CODE_ERR_COOKIE_EMPTY,
   CODE_ERR_CSRF_FAIL,
   CODE_ERR_POST_FAIL,
   CODE_OK,
   FORUM_BASE,
   FORUM_HOST,
   TARGET_CATEGORY_SLUG,
-} from "./constant.js";
-import { cookieRead } from "./cookieRead.js";
+} from "../constant.js";
+import { siteCookieRead } from "../siteCookieRead.js";
+import { postDryRunPreview } from "../postDryRunPreview.js";
+import { postsYmlRecord } from "../postsYmlRecord.js";
+import { postMdRead } from "../postMdRead.js";
 import { forumCategoryFind } from "./forumCategoryFind.js";
-import { postMdRead } from "./postMdRead.js";
 import {
   csrfTokenFetch,
   sessionVerify,
   topicCreate,
 } from "./forumPostPublish.js";
 
-export const forumPost = async (
+export const post = async (
   file_name,
   is_dry_run = false,
   custom_section = null,
+  custom_tags = null,
+  custom_link = null,
+  custom_title = null,
+  edit_id = null,
+  extra_opt = {},
 ) => {
-  const target_category = custom_section ?? TARGET_CATEGORY_SLUG;
-
-  console.log("=== 正在读取本机 Chrome SQLite Cookies (Discourse) ===");
-  const [cookie_code, cookie_str, cookie_map] = await cookieRead(FORUM_HOST);
-  if (cookie_code === CODE_ERR_COOKIE_DB) {
-    console.error("[错误] 未找到 Chrome Cookies SQLite 数据库文件。");
-    return [CODE_ERR_COOKIE_DB, "", "未找到 Chrome Cookie 数据库"];
-  }
-  if (cookie_code === CODE_ERR_COOKIE_EMPTY) {
-    console.error(
-      "[错误] 未在 Chrome 中找到 " +
-        FORUM_HOST +
-        " 的有效 Cookie，请在 Chrome 中登录该论坛。",
-    );
-    return [CODE_ERR_COOKIE_EMPTY, "", "未找到有效 Cookie"];
-  }
-  console.log("✓ 成功解密 Cookie 项数: " + Object.keys(cookie_map).length);
+  const [cookie_code, cookie_str] = await siteCookieRead(
+    FORUM_HOST,
+    "Discourse",
+  );
+  if (cookie_code !== CODE_OK) return [cookie_code, "", "读取 Cookie 失败"];
 
   console.log("\n=== 正在验证论坛登录状态 ===");
   const [auth_code, username, can_post] = await sessionVerify(cookie_str);
@@ -66,6 +59,7 @@ export const forumPost = async (
   }
   console.log("✓ 获取 CSRF Token 成功");
 
+  const target_category = custom_section ?? TARGET_CATEGORY_SLUG;
   console.log("\n=== 正在查询论坛板块 ===");
   const [cat_code, category_id, category_name] =
     await forumCategoryFind(target_category);
@@ -76,18 +70,17 @@ export const forumPost = async (
   console.log("✓ 目标板块: " + category_name + " (ID: " + category_id + ")");
 
   console.log("\n=== 正在从本地 md/ 目录读取帖子内容 ===");
-  const [title, raw, md_file_path] = await postMdRead(file_name);
+  const [md_title, raw, md_file_path] = await postMdRead(file_name),
+    final_title = custom_title ?? md_title;
+
   console.log("源文件: " + md_file_path);
-  console.log("标题: " + title);
+  console.log("标题: " + final_title);
   console.log("内容字数: " + raw.length + " 字符");
 
   if (is_dry_run) {
-    console.log("\n[Dry-run 预览模式] 未执行实际发帖。以下为帖子正文预览:\n");
-    console.log("----------------------------------------");
-    console.log(raw);
-    console.log("----------------------------------------");
-    console.log("\n如需执行真实发布，请去掉 --dry-run 参数直接运行。");
-    return [CODE_OK, "", "dry-run"];
+    return postDryRunPreview("users.rust-lang.org", final_title, raw, {
+      板块: category_name + " (ID: " + category_id + ")",
+    });
   }
 
   console.log("\n=== 正在发布帖子至 " + FORUM_BASE + " ===");
@@ -95,7 +88,7 @@ export const forumPost = async (
     cookie_str,
     csrf_token,
     category_id,
-    title,
+    final_title,
     raw,
   );
 
@@ -103,6 +96,14 @@ export const forumPost = async (
     console.error("[错误] 发布帖子失败: " + result);
     return [CODE_ERR_POST_FAIL, "", result];
   }
+
+  await postsYmlRecord({
+    platform: "users.rust-lang.org",
+    section: category_name,
+    title: final_title,
+    source_file: md_file_path,
+    url: topic_url,
+  });
 
   if (result === "enqueued") {
     console.log(
@@ -116,4 +117,4 @@ export const forumPost = async (
   return [CODE_OK, topic_url, result];
 };
 
-export default forumPost;
+export default post;
