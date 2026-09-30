@@ -5,6 +5,35 @@ year: 2026
 date: 2026-09-14
 
 posts:
+  - platform: github.com
+    section: luau-lang/luau (Show and tell)
+    title: "ulua: An ongoing pure Rust rewrite and modernization of Luau"
+    source_file: md/ulua_gh_discussion.md
+    url: https://github.com/luau-lang/luau/discussions/3011
+    published_at: 2026-09-30T07:57:54.000Z
+  - platform: juejin.cn
+    section: 后端
+    title: "写了个纯 Rust 实现的 Luau 语言与 JIT 虚拟机 ulua"
+    source_file: md/ulua_zh.md
+    url: https://juejin.cn/post/7691127895326933055
+    published_at: 2026-09-30T07:58:59.871Z
+  - platform: rustcc.cn
+    section: 大家的项目
+    title: "写了个纯 Rust 实现的 Luau 语言与 JIT 虚拟机 ulua"
+    source_file: md/ulua_zh.md
+    url: https://rustcc.cn/article?id=ae4f691d-a220-4903-8989-78f2847f109b
+    published_at: 2026-09-30T07:58:47.685Z
+  - platform: news.ycombinator.com
+    title: "ulua: Pure Rust implementation of the Luau language with JIT and WebAssembly"
+    source_file: md/ulua_en.md
+    url: https://news.ycombinator.com/item?id=49905828
+    published_at: 2026-09-30T07:58:29.402Z
+  - platform: users.rust-lang.org
+    section: announcements
+    title: "ulua: Pure Rust implementation of the Luau language with JIT and WebAssembly"
+    source_file: md/ulua_en.md
+    url: https://users.rust-lang.org/t/ulua-pure-rust-implementation-of-the-luau-language-with-jit-and-webassembly/142724
+    published_at: 2026-09-30T07:58:12.719Z
   - platform: news.ycombinator.com
     title: "Show HN: fixrs – Refactoring for long absolute paths and clippy::absolute_paths"
     source_file: md/fixrs.md
